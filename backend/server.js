@@ -1,0 +1,197 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Enable CORS for all origins (allows cross-domain requests from separate frontend hosts)
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Setup multer for parsing multipart/form-data
+const upload = multer();
+
+// Paths
+const DATA_DIR = path.join(__dirname, 'data');
+const JSON_FILE = path.join(DATA_DIR, 'submissions.json');
+const CSV_FILE = path.join(DATA_DIR, 'submissions.csv');
+
+// Ensure data directory and files exist
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+if (!fs.existsSync(JSON_FILE)) {
+  fs.writeFileSync(JSON_FILE, JSON.stringify([]));
+}
+if (!fs.existsSync(CSV_FILE)) {
+  fs.writeFileSync(CSV_FILE, 'Timestamp,Name,Email,University,Branch,Department,SnoxxProject,PublishableProject\n');
+}
+
+// Helper to escape values for CSV
+function escapeCsv(value) {
+  if (value === null || value === undefined) return '';
+  const stringValue = String(value);
+  if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+}
+
+// Root welcome response
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'online',
+    message: 'Welcome to the Snoxx Intern Selection API',
+    endpoints: {
+      submit: 'POST /api/submit',
+      submissions: 'GET /api/submissions',
+      export: 'GET /api/submissions/export',
+      clear: 'POST /api/submissions/clear',
+      status: 'GET /api/sheets-status'
+    }
+  });
+});
+
+// Route to submit project selection
+app.post('/api/submit', upload.none(), async (req, res) => {
+  try {
+    const { Name, Email, University, Branch, Department, SnoxxProject, PublishableProject } = req.body;
+
+    // Validation
+    if (!Name || !Email || !University || !Branch || !Department || !SnoxxProject || !PublishableProject) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'All fields are required. Please check that you completed all steps.' 
+      });
+    }
+
+    const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+    const newEntry = {
+      Timestamp: timestamp,
+      Name: Name.trim(),
+      Email: Email.trim(),
+      University: University.trim(),
+      Branch: Branch.trim(),
+      Department: Department.trim(),
+      SnoxxProject: SnoxxProject.trim(),
+      PublishableProject: PublishableProject.trim()
+    };
+
+    // 1. Read, update, and write to JSON file
+    let submissions = [];
+    try {
+      const fileData = fs.readFileSync(JSON_FILE, 'utf8');
+      submissions = JSON.parse(fileData || '[]');
+    } catch (err) {
+      console.error('Error reading JSON file, resetting storage:', err);
+      submissions = [];
+    }
+
+    submissions.push(newEntry);
+    fs.writeFileSync(JSON_FILE, JSON.stringify(submissions, null, 2));
+
+    // 2. Append to CSV file
+    const csvLine = `${escapeCsv(newEntry.Timestamp)},${escapeCsv(newEntry.Name)},${escapeCsv(newEntry.Email)},${escapeCsv(newEntry.University)},${escapeCsv(newEntry.Branch)},${escapeCsv(newEntry.Department)},${escapeCsv(newEntry.SnoxxProject)},${escapeCsv(newEntry.PublishableProject)}\n`;
+    fs.appendFileSync(CSV_FILE, csvLine);
+
+    console.log(`[Success] Recorded submission from ${newEntry.Name} (${newEntry.Email})`);
+
+    // 3. Forward to Google Sheets in the background (non-blocking)
+    const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+    if (scriptUrl && scriptUrl.trim() !== '') {
+      console.log(`[Info] Forwarding submission for ${newEntry.Name} to Google Sheets...`);
+      fetch(scriptUrl.trim(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newEntry)
+      })
+      .then(async (response) => {
+        if (response.ok) {
+          console.log(`[Success] Google Sheets sync completed for ${newEntry.Name}`);
+        } else {
+          const text = await response.text().catch(() => '');
+          console.warn(`[Warning] Google Sheets sync responded with status ${response.status}: ${text}`);
+        }
+      })
+      .catch((err) => {
+        console.error(`[Error] Failed to forward to Google Sheets Web App:`, err.message);
+      });
+    } else {
+      console.log(`[Info] Google Sheets sync is disabled (no GOOGLE_SCRIPT_URL set).`);
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Selection recorded successfully.' 
+    });
+  } catch (error) {
+    console.error('Error processing submission:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error while saving submission.' 
+    });
+  }
+});
+
+// Route to get all submissions
+app.get('/api/submissions', (req, res) => {
+  try {
+    const fileData = fs.readFileSync(JSON_FILE, 'utf8');
+    const submissions = JSON.parse(fileData || '[]');
+    return res.json({ success: true, data: submissions });
+  } catch (error) {
+    console.error('Error fetching submissions:', error);
+    return res.status(500).json({ success: false, message: 'Could not retrieve submissions.' });
+  }
+});
+
+// Route to export/download CSV
+app.get('/api/submissions/export', (req, res) => {
+  try {
+    if (fs.existsSync(CSV_FILE)) {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=snoxx_interns_${new Date().toISOString().split('T')[0]}.csv`);
+      return res.sendFile(CSV_FILE);
+    } else {
+      return res.status(404).json({ success: false, message: 'CSV file not found.' });
+    }
+  } catch (error) {
+    console.error('Error downloading CSV file:', error);
+    return res.status(500).json({ success: false, message: 'Error downloading file.' });
+  }
+});
+
+// Route to clear submissions
+app.post('/api/submissions/clear', (req, res) => {
+  try {
+    fs.writeFileSync(JSON_FILE, JSON.stringify([]));
+    fs.writeFileSync(CSV_FILE, 'Timestamp,Name,Email,University,Branch,Department,SnoxxProject,PublishableProject\n');
+    console.log('[Info] Cleared all submissions.');
+    return res.json({ success: true, message: 'All submissions cleared successfully.' });
+  } catch (error) {
+    console.error('Error clearing submissions:', error);
+    return res.status(500).json({ success: false, message: 'Could not clear submissions.' });
+  }
+});
+
+// Google Sheets connection status route
+app.get('/api/sheets-status', (req, res) => {
+  const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+  return res.json({
+    success: true,
+    connected: !!(scriptUrl && scriptUrl.trim() !== ''),
+    url: scriptUrl && scriptUrl.trim() !== '' ? scriptUrl.trim().substring(0, 35) + '...' : null
+  });
+});
+
+// Start Server
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+});
