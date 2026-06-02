@@ -141,8 +141,42 @@ app.post('/api/submit', upload.none(), async (req, res) => {
 });
 
 // Route to get all submissions
-app.get('/api/submissions', (req, res) => {
+app.get('/api/submissions', async (req, res) => {
   try {
+    const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+    if (scriptUrl && scriptUrl.trim() !== '') {
+      console.log('[Info] Fetching latest submissions from Google Sheets...');
+      try {
+        const response = await fetch(scriptUrl.trim());
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            const submissions = result.data || [];
+            
+            // Sync to local files (cache)
+            fs.writeFileSync(JSON_FILE, JSON.stringify(submissions, null, 2));
+            
+            // Re-generate CSV locally
+            let csvContent = 'Timestamp,Name,Email,University,Branch,Department,SnoxxProject,PublishableProject\n';
+            submissions.forEach(entry => {
+              csvContent += `${escapeCsv(entry.Timestamp)},${escapeCsv(entry.Name)},${escapeCsv(entry.Email)},${escapeCsv(entry.University)},${escapeCsv(entry.Branch)},${escapeCsv(entry.Department)},${escapeCsv(entry.SnoxxProject)},${escapeCsv(entry.PublishableProject)}\n`;
+            });
+            fs.writeFileSync(CSV_FILE, csvContent);
+            
+            console.log(`[Success] Synced ${submissions.length} submissions from Google Sheets.`);
+            return res.json({ success: true, data: submissions });
+          } else {
+            console.warn('[Warning] Google Sheets script returned error:', result.error);
+          }
+        } else {
+          console.warn(`[Warning] Google Sheets responded with status ${response.status}`);
+        }
+      } catch (fetchErr) {
+        console.error('[Error] Google Sheets fetch failed, using local cache:', fetchErr.message);
+      }
+    }
+
+    // Fallback to local files if Google Sheets sync is disabled or fails
     const fileData = fs.readFileSync(JSON_FILE, 'utf8');
     const submissions = JSON.parse(fileData || '[]');
     return res.json({ success: true, data: submissions });
@@ -169,11 +203,40 @@ app.get('/api/submissions/export', (req, res) => {
 });
 
 // Route to clear submissions
-app.post('/api/submissions/clear', (req, res) => {
+app.post('/api/submissions/clear', async (req, res) => {
   try {
+    // 1. Clear local cache
     fs.writeFileSync(JSON_FILE, JSON.stringify([]));
     fs.writeFileSync(CSV_FILE, 'Timestamp,Name,Email,University,Branch,Department,SnoxxProject,PublishableProject\n');
-    console.log('[Info] Cleared all submissions.');
+    console.log('[Info] Cleared local cache.');
+
+    // 2. Clear Google Sheets if connected
+    const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+    if (scriptUrl && scriptUrl.trim() !== '') {
+      console.log('[Info] Sending clear command to Google Sheets...');
+      try {
+        const response = await fetch(scriptUrl.trim(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ action: 'clear' })
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            console.log('[Success] Google Sheets database cleared.');
+          } else {
+            console.warn('[Warning] Google Sheets clear failed:', result.error);
+          }
+        } else {
+          console.warn(`[Warning] Google Sheets clear responded with status ${response.status}`);
+        }
+      } catch (err) {
+        console.error('[Error] Failed to send clear request to Google Sheets:', err.message);
+      }
+    }
+
     return res.json({ success: true, message: 'All submissions cleared successfully.' });
   } catch (error) {
     console.error('Error clearing submissions:', error);

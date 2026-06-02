@@ -32,22 +32,71 @@
  * =========================================================================
  */
 
-// Handles GET requests (e.g. visiting the URL directly in a browser)
+// Handles GET requests (e.g. fetching all submissions)
 function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({ 
-    success: true, 
-    message: "Snoxx Google Sheets Sync Web App is active! (Use POST requests to sync intern data)" 
-  })).setMimeType(ContentService.MimeType.JSON);
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var lastRow = sheet.getLastRow();
+    
+    // If sheet is empty or only has headers
+    if (lastRow <= 1) {
+      return ContentService.createTextOutput(JSON.stringify({ 
+        success: true, 
+        data: [] 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var rows = sheet.getDataRange().getValues();
+    var headers = rows[0];
+    var data = [];
+    
+    for (var i = 1; i < rows.length; i++) {
+      var row = rows[i];
+      var record = {};
+      for (var j = 0; j < headers.length; j++) {
+        var val = row[j];
+        // Format Date to India timezone string
+        if (headers[j] === "Timestamp" && val instanceof Date) {
+          record[headers[j]] = Utilities.formatDate(val, "GMT+5:30", "M/d/yyyy, h:mm:ss a");
+        } else {
+          record[headers[j]] = val;
+        }
+      }
+      data.push(record);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ 
+      success: true, 
+      data: data 
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ 
+      success: false, 
+      error: err.toString() 
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
-// Handles POST requests (called by your backend server to insert new rows)
+// Handles POST requests (called by your backend server to insert new rows or clear data)
 function doPost(e) {
   try {
-    // 1. Open the active spreadsheet and sheet
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     
     // 2. Parse incoming JSON submission payload
     var data = JSON.parse(e.postData.contents);
+    
+    // Check if the action is to clear the database
+    if (data.action === "clear") {
+      var lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        sheet.deleteRows(2, lastRow - 1);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ 
+        success: true, 
+        message: "Google Sheet cleared successfully." 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
     
     // 3. Append the record to the sheet
     sheet.appendRow([
