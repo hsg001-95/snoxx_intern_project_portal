@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snoxx Admin Dashboard - Intern Submissions</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f4f6fc 0%, #eef2f7 50%, #e4e9f2 100%);
+            min-height: 100vh;
+            color: #334155;
+            padding: 40px 20px;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* Header block */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo-img {
+            max-height: 65px;
+            object-fit: contain;
+            filter: invert(1); /* Invert the black logo for light theme */
+        }
+        .header-title-text h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #1e40af, #4f46e5, #db2777);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+        .header-title-text p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            color: #fff;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
+        }
+        .btn-danger {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+        }
+        .btn-danger:hover {
+            background: #fee2e2;
+            border-color: #f87171;
+            box-shadow: 0 6px 15px rgba(220, 38, 38, 0.1);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: #cbd5e1;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: #6366f1;
+        }
+        .stat-card.total::before { background: linear-gradient(#2563eb, #10b981); }
+        .stat-card.aiml::before { background: #3b82f6; }
+        .stat-card.mlops::before { background: #6366f1; }
+        .stat-card.de::before { background: #f59e0b; }
+        .stat-card.backend::before { background: #10b981; }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .stat-val {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Controls Block */
+        .controls-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+        
+        .search-wrapper {
+            flex: 1;
+            min-width: 280px;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 14px 18px 14px 45px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            color: #0f172a;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .search-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        .filter-wrapper {
+            min-width: 220px;
+        }
+        .filter-select {
+            width: 100%;
+            padding: 14px 18px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            color: #0f172a;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 18px center;
+            background-size: 16px;
+        }
+        .filter-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        .filter-select option {
+            background: #ffffff;
+            color: #0f172a;
+        }
+
+        /* Table Card */
+        .table-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.03);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 18px 24px;
+            font-weight: 700;
+            color: #4f46e5;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 18px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+            color: #334155;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        /* Badges */
+        .dept-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-aiml { background: #dbeafe; color: #1e40af; border: 1px solid rgba(30, 64, 175, 0.2); }
+        .badge-mlops { background: #e0e7ff; color: #4338ca; border: 1px solid rgba(67, 56, 202, 0.2); }
+        .badge-de { background: #fef3c7; color: #b45309; border: 1px solid rgba(180, 83, 9, 0.2); }
+        .badge-backend { background: #d1fae5; color: #065f46; border: 1px solid rgba(6, 95, 70, 0.2); }
+
+        .project-tag {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            display: inline-block;
+            max-width: 280px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #334155;
+            font-weight: 500;
+        }
+        .project-tag.snoxx {
+            border-left: 3px solid #2563eb;
+        }
+        .project-tag.pub {
+            border-left: 3px solid #d97706;
+        }
+
+        .meta-text {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .primary-text {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Loading / Empty States */
+        .loading-state {
+            padding: 60px;
+            text-align: center;
+            color: #4f46e5;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .empty-state {
+            padding: 80px 40px;
+            text-align: center;
+            color: #64748b;
+            display: none;
+        }
+        .empty-state h3 {
+            color: #0f172a;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(79, 70, 229, 0.1);
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Sync Status indicator styling */
+        .sync-status-wrapper {
+            margin-top: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 4px 12px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+        }
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #64748b;
+            display: inline-block;
+        }
+        .sync-text {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            .controls-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <img src="/logo.jpg" alt="Snoxx Tech Logo" class="logo-img">
+                <div class="header-title-text">
+                    <h1>📊 Intern Selection Dashboard</h1>
+                    <p>Track, filter, and manage applicant selections in real-time</p>
+                    <div class="sync-status-wrapper" id="sheetsStatusWrapper">
+                        <span class="sync-dot" id="statusDot"></span>
+                        <span class="sync-text" id="statusText">Checking Sheets Sync...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="/api/submissions/export" class="btn btn-primary" id="exportBtn">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Export CSV
+                </a>
+                <button onclick="clearSubmissions()" class="btn btn-danger">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Clear Database
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Counter -->
+        <section class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-label">Total Applicants</div>
+                <div class="stat-val" id="stat-total">0</div>
+            </div>
+            <div class="stat-card aiml">
+                <div class="stat-label">AI/ML</div>
+                <div class="stat-val" id="stat-aiml">0</div>
+            </div>
+            <div class="stat-card mlops">
+                <div class="stat-label">MLOps</div>
+                <div class="stat-val" id="stat-mlops">0</div>
+            </div>
+            <div class="stat-card de">
+                <div class="stat-label">Data Eng</div>
+                <div class="stat-val" id="stat-de">0</div>
+            </div>
+            <div class="stat-card backend">
+                <div class="stat-label">Backend</div>
+                <div class="stat-val" id="stat-backend">0</div>
+            </div>
+        </section>
+
+        <!-- Search and Filter Controls -->
+        <section class="controls-card">
+            <div class="search-wrapper">
+                <!-- SVG search icon -->
+                <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name, email, or university..." oninput="filterData()">
+            </div>
+            <div class="filter-wrapper">
+                <select id="deptFilter" class="filter-select" onchange="filterData()">
+                    <option value="">All Departments</option>
+                    <option value="AI/ML">🤖 AI / ML</option>
+                    <option value="MLOps">⚙️ MLOps</option>
+                    <option value="Data Engineering">🗄️ Data Engineering</option>
+                    <option value="Backend">🔧 Backend</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Table -->
+        <section class="table-card">
+            <!-- Loading -->
+            <div id="loading" class="loading-state">
+                <div class="spinner"></div>
+                Retrieving responses...
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty" class="empty-state">
+                <h3>No Submissions Found</h3>
+                <p>Once interns submit their project choices, they will show up here.</p>
+            </div>
+
+            <!-- Main Table -->
+            <div class="table-container" id="tableContainer" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Applicant</th>
+                            <th>Education</th>
+                            <th>Department</th>
+                            <th>Selected Projects</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissionsBody">
+                        <!-- Inserted dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // ========================================================
+        // CONFIGURATION - SET API URL HERE IF HOSTED SEPARATELY
+        // ========================================================
+        const API_BASE_URL = "https://snoxx-intern-project-portal.onrender.com"; 
+        // ========================================================
+
+        let allSubmissions = [];
+
+        // Check Google Sheets connection status
+        async function checkSheetsStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/sheets-status`);
+                const result = await response.json();
+                const dot = document.getElementById('statusDot');
+                const text = document.getElementById('statusText');
+                
+                if (result.success && result.connected) {
+                    dot.style.backgroundColor = '#10b981';
+                    dot.style.boxShadow = '0 0 6px rgba(16, 185, 129, 0.4)';
+                    text.innerText = 'Google Sheets Sync Active';
+                    text.style.color = '#065f46';
+                    text.title = `Sync URL: ${result.url}`;
+                    document.getElementById('sheetsStatusWrapper').style.background = '#d1fae5';
+                    document.getElementById('sheetsStatusWrapper').style.borderColor = '#a7f3d0';
+                } else {
+                    dot.style.backgroundColor = '#64748b';
+                    dot.style.boxShadow = 'none';
+                    text.innerText = 'Google Sheets Offline (Local Only)';
+                    text.style.color = '#475569';
+                    text.title = 'Add GOOGLE_SCRIPT_URL to .env to connect';
+                    document.getElementById('sheetsStatusWrapper').style.background = '#f1f5f9';
+                    document.getElementById('sheetsStatusWrapper').style.borderColor = '#cbd5e1';
+                }
+            } catch (err) {
+                console.error('Error checking sheets status:', err);
+            }
+        }
+
+        // Fetch submissions from API
+        async function fetchSubmissions() {
+            try {
+                // Set the CSV export URL dynamically
+                document.getElementById('exportBtn').href = `${API_BASE_URL}/api/submissions/export`;
+
+                // Perform health check and fetch submissions
+                checkSheetsStatus();
+
+                const response = await fetch(`${API_BASE_URL}/api/submissions`);
+                const result = await response.json();
+                if (result.success) {
+                    allSubmissions = result.data || [];
+                    updateStats();
+                    renderTable(allSubmissions);
+                } else {
+                    alert('Failed to load submissions from API');
+                }
+            } catch (error) {
+                console.error('Error fetching submissions:', error);
+                document.getElementById('loading').innerHTML = '❌ Failed to connect to server. Ensure backend is running.';
+            }
+        }
+
+        // Render submissions table
+        function renderTable(data) {
+            const loadingEl = document.getElementById('loading');
+            const emptyEl = document.getElementById('empty');
+            const tableContainer = document.getElementById('tableContainer');
+            const tbody = document.getElementById('submissionsBody');
+
+            loadingEl.style.display = 'none';
+
+            if (data.length === 0) {
+                emptyEl.style.display = 'block';
+                tableContainer.style.display = 'none';
+                return;
+            }
+
+            emptyEl.style.display = 'none';
+            tableContainer.style.display = 'block';
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                const deptClass = item.Department.toLowerCase().replace('/', '');
+                const deptBadgeClass = `dept-badge badge-${deptClass === 'data engineering' ? 'de' : deptClass}`;
+
+                tr.innerHTML = `
+                    <td class="meta-text">${item.Timestamp}</td>
+                    <td>
+                        <div class="primary-text">${escapeHTML(item.Name)}</div>
+                        <div class="meta-text">${escapeHTML(item.Email)}</div>
+                    </td>
+                    <td>
+                        <div class="primary-text">${escapeHTML(item.University)}</div>
+                        <div class="meta-text">${escapeHTML(item.Branch)}</div>
+                    </td>
+                    <td>
+                        <span class="${deptBadgeClass}">${item.Department}</span>
+                    </td>
+                    <td>
+                        <div class="project-tag snoxx" title="${escapeHTML(item.SnoxxProject)}">
+                            🏢 ${escapeHTML(item.SnoxxProject)}
+                        </div>
+                        <br>
+                        <div class="project-tag pub" title="${escapeHTML(item.PublishableProject)}">
+                            🌍 ${escapeHTML(item.PublishableProject)}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Search & Filter functionality
+        function filterData() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const dept = document.getElementById('deptFilter').value;
+
+            const filtered = allSubmissions.filter(item => {
+                const matchesSearch = 
+                    item.Name.toLowerCase().includes(query) ||
+                    item.Email.toLowerCase().includes(query) ||
+                    item.University.toLowerCase().includes(query) ||
+                    item.Branch.toLowerCase().includes(query);
+                
+                const matchesDept = !dept || item.Department === dept;
+
+                return matchesSearch && matchesDept;
+            });
+
+            renderTable(filtered);
+        }
+
+        // Update Counter Stats
+        function updateStats() {
+            document.getElementById('stat-total').innerText = allSubmissions.length;
+            
+            const counts = { 'AI/ML': 0, 'MLOps': 0, 'Data Engineering': 0, 'Backend': 0 };
+            allSubmissions.forEach(item => {
+                if (counts[item.Department] !== undefined) {
+                    counts[item.Department]++;
+                }
+            });
+
+            document.getElementById('stat-aiml').innerText = counts['AI/ML'];
+            document.getElementById('stat-mlops').innerText = counts['MLOps'];
+            document.getElementById('stat-de').innerText = counts['Data Engineering'];
+            document.getElementById('stat-backend').innerText = counts['Backend'];
+        }
+
+        // Clear Submissions API Trigger
+        async function clearSubmissions() {
+            if (!confirm('⚠️ WARNING: This will permanently delete ALL applicant submissions from both JSON and CSV files. This action cannot be undone.\n\nAre you sure you want to proceed?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/submissions/clear`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    allSubmissions = [];
+                    updateStats();
+                    renderTable([]);
+                } else {
+                    alert('Error clearing data');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error. Failed to clear database.');
+            }
+        }
+
+        // Escape helper
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Initial load
+        window.addEventListener('DOMContentLoaded', fetchSubmissions);
+    </script>
+</body>
+</html>

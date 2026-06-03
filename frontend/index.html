@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snoxx Internship Project Selection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f4f6fc 0%, #eef2f7 50%, #e4e9f2 100%);
+            min-height: 100vh;
+            color: #334155;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-img {
+            max-height: 80px;
+            margin-bottom: 15px;
+            display: inline-block;
+            object-fit: contain;
+            filter: invert(1);
+            /* Inverts the black-and-white logo to fit the light theme beautifully */
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, #1e40af, #4f46e5, #db2777);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+
+        label .required {
+            color: #ef4444;
+            margin-left: 3px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 14px 18px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            color: #0f172a;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #4f46e5;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        select option {
+            background: #ffffff;
+            color: #0f172a;
+        }
+
+        .projects-section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .projects-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .category-title {
+            font-size: 1.2rem;
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .snoxx-title {
+            color: #2563eb;
+            border-color: rgba(37, 99, 235, 0.2);
+        }
+
+        .publish-title {
+            color: #d97706;
+            border-color: rgba(217, 119, 6, 0.2);
+        }
+
+        .project-option {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .project-option:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            transform: translateX(5px);
+        }
+
+        .project-option.selected {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .project-option input[type="radio"] {
+            width: 22px;
+            height: 22px;
+            accent-color: #10b981;
+            margin-top: 3px;
+            cursor: pointer;
+        }
+
+        .project-content {
+            flex: 1;
+        }
+
+        .project-code {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-family: monospace;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .project-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+            color: #1e293b;
+        }
+
+        .project-desc {
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+
+        .meta-tag {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .meta-search {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .meta-revenue {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .meta-impact {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(90deg, #ef4444, #f97316);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2);
+        }
+
+        .submit-btn:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .note {
+            background: #fffbeb;
+            border-left: 3px solid #f59e0b;
+            padding: 15px 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #78350f;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px;
+            }
+        }
+
+        /* Success overlay */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .success-overlay.active {
+            display: flex;
+        }
+
+        .success-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .success-card h2 {
+            color: #059669;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        .success-card p {
+            color: #475569;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .success-card .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .success-card .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+
+        .loading.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/logo.jpg" alt="Snoxx Tech Logo" class="logo-img">
+            <h1>🏢 Internship Project Selection</h1>
+            <p>Select your department, then choose 1 Snoxx Tool + 1 Publishable Tool</p>
+        </div>
+
+        <form id="internForm">
+            <!-- Personal Details -->
+            <div class="two-col">
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" name="Name" id="name" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" name="Email" id="email" placeholder="your.email@user.com" required>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label>University/College <span class="required">*</span></label>
+                    <input type="text" name="University" id="university" placeholder="e.g., IIT Delhi, NIT Trichy"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Branch/Specialization <span class="required">*</span></label>
+                    <input type="text" name="Branch" id="branch" placeholder="e.g., CSE, AI/ML, Data Science" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Internship Department <span class="required">*</span></label>
+                <select name="Department" id="department" required onchange="showProjects()">
+                    <option value="">-- Select Your Department --</option>
+                    <option value="AI/ML">🤖 AI / ML Intern</option>
+                    <option value="MLOps">⚙️ MLOps Intern</option>
+                    <option value="Data Engineering">🗄️ Data Engineering Intern</option>
+                    <option value="Backend">🔧 Backend Intern</option>
+                </select>
+            </div>
+
+            <!-- AI/ML Projects -->
+            <div id="aiml-projects" class="projects-section">
+                <div class="category-title snoxx-title">🏢 Category S: Snoxx Company Tools (Pick ONE)</div>
+
+                <div class="project-option" onclick="selectRadio('aiml-s1')">
+                    <input type="radio" name="SnoxxProject" id="aiml-s1" value="S1 - Lead Discovery Engine" required>
+                    <div class="project-content">
+                        <div class="project-code">S1</div>
+                        <div class="project-name">AI-Powered Lead Discovery & Outreach Engine</div>
+                        <div class="project-desc">Scrapes LinkedIn, IndiaMART, Clutch → ML scores leads → LLM drafts
+                            outreach → CRM export</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.5/10</span>
+                            <span class="meta-tag meta-revenue">💰 Revenue Growth</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-s2')">
+                    <input type="radio" name="SnoxxProject" id="aiml-s2" value="S2 - AutoML Builder">
+                    <div class="project-content">
+                        <div class="project-code">S2</div>
+                        <div class="project-name">No-Code AutoML Builder for Client Delivery</div>
+                        <div class="project-desc">Upload CSV → auto-detects task → trains models → picks best → branded
+                            PDF report</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.2/10</span>
+                            <span class="meta-tag meta-revenue">💰 Margin Expansion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-s3')">
+                    <input type="radio" name="SnoxxProject" id="aiml-s3" value="S3 - Proposal Win-Rate Predictor">
+                    <div class="project-content">
+                        <div class="project-code">S3</div>
+                        <div class="project-name">Proposal Win-Rate Predictor with SHAP Insights</div>
+                        <div class="project-desc">Logs proposals → trains classifier → predicts win probability + SHAP
+                            suggestions</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.0/10</span>
+                            <span class="meta-tag meta-revenue">💰 Revenue Optimization</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-s4')">
+                    <input type="radio" name="SnoxxProject" id="aiml-s4" value="S4 - Multilingual Sentiment Engine">
+                    <div class="project-content">
+                        <div class="project-code">S4</div>
+                        <div class="project-name">Multilingual Indian Sentiment Engine</div>
+                        <div class="project-desc">Processes Hindi/Hinglish/Tamil reviews → sentiment + topic tags →
+                            trend dashboard</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 8.8/10</span>
+                            <span class="meta-tag meta-revenue">💰 Premium Offering</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-s5')">
+                    <input type="radio" name="SnoxxProject" id="aiml-s5" value="S5 - Website Anomaly Detector">
+                    <div class="project-content">
+                        <div class="project-code">S5</div>
+                        <div class="project-name">Website Behavior Anomaly Detector</div>
+                        <div class="project-desc">JS snippet → streams events → Isolation Forest flags bots/drop-offs →
+                            real-time alerts</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 8.5/10</span>
+                            <span class="meta-tag meta-revenue">💰 Recurring Revenue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-s6')">
+                    <input type="radio" name="SnoxxProject" id="aiml-s6" value="S6 - Project Scope Estimator">
+                    <div class="project-content">
+                        <div class="project-code">S6</div>
+                        <div class="project-name">AI Project Scope & Effort Estimator</div>
+                        <div class="project-desc">Analyzes past briefs → auto-estimates scope, hours, cost, risk for new
+                            projects</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 8.2/10</span>
+                            <span class="meta-tag meta-revenue">💰 Margin Protection</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-title publish-title">🌍 Category P: Publishable Tools (Pick ONE)</div>
+
+                <div class="project-option" onclick="selectRadio('aiml-p1')">
+                    <input type="radio" name="PublishableProject" id="aiml-p1"
+                        value="P1 - Resume Builder & ATS Optimizer" required>
+                    <div class="project-content">
+                        <div class="project-code">P1</div>
+                        <div class="project-name">Resume Builder & ATS Optimizer with Job Tracker</div>
+                        <div class="project-desc">Upload CV → ATS optimization → JD match score → application tracking →
+                            interview prep</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 1.5M+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹72L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-p2')">
+                    <input type="radio" name="PublishableProject" id="aiml-p2"
+                        value="P2 - Expense Tracker with UPI Parsing">
+                    <div class="project-content">
+                        <div class="project-code">P2</div>
+                        <div class="project-name">Personal Expense Tracker with SMS & UPI Parsing</div>
+                        <div class="project-desc">Forward UPI/bank SMS → auto-parse → spending breakdown → budget alerts
+                            → savings insights</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 1M+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹72L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-p3')">
+                    <input type="radio" name="PublishableProject" id="aiml-p3"
+                        value="P3 - Meeting Transcriber + Action Tracker">
+                    <div class="project-content">
+                        <div class="project-code">P3</div>
+                        <div class="project-name">AI Meeting Transcriber + Cross-Meeting Action Tracker</div>
+                        <div class="project-desc">Upload transcript → summary + action items → persistent tracker →
+                            weekly digests</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 500K+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹72L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-p4')">
+                    <input type="radio" name="PublishableProject" id="aiml-p4" value="P4 - Grammar & Writing Checker">
+                    <div class="project-content">
+                        <div class="project-code">P4</div>
+                        <div class="project-name">AI Grammar, Tone & Writing Clarity Checker</div>
+                        <div class="project-desc">Grammar fixes → readability score → tone analysis → rewrite mode →
+                            tracks improvement</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 2M+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹60L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-p5')">
+                    <input type="radio" name="PublishableProject" id="aiml-p5"
+                        value="P5 - Flashcard & Study Notes Generator">
+                    <div class="project-content">
+                        <div class="project-code">P5</div>
+                        <div class="project-name">AI Flashcard & Study Notes with Spaced Repetition</div>
+                        <div class="project-desc">Paste topic/PDF/YouTube → flashcards + quiz → SRS scheduler → progress
+                            tracking</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 600K+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹48L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('aiml-p6')">
+                    <input type="radio" name="PublishableProject" id="aiml-p6" value="P6 - Code Explainer & Debugger">
+                    <div class="project-content">
+                        <div class="project-code">P6</div>
+                        <div class="project-name">AI Code Explainer, Debugger & Documentation Generator</div>
+                        <div class="project-desc">Paste code → line-by-line explanation → bug fix → auto-docs →
+                            complexity analysis</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 300K+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹24L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MLOps Projects -->
+            <div id="mlops-projects" class="projects-section">
+                <div class="category-title snoxx-title">🏢 Category S: Snoxx Company Tools (Pick ONE)</div>
+
+                <div class="project-option" onclick="selectRadio('mlops-s1')">
+                    <input type="radio" name="SnoxxProject" id="mlops-s1" value="M-S1 - Model Deployment & Handoff"
+                        required>
+                    <div class="project-content">
+                        <div class="project-code">M-S1</div>
+                        <div class="project-name">One-Click ML Model Deployment & Client Handoff System</div>
+                        <div class="project-desc">Model → Docker → REST API → client portal → drift alerts →
+                            professional deliverables</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.5/10</span>
+                            <span class="meta-tag meta-revenue">💰 Premium Deliverables</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('mlops-s2')">
+                    <input type="radio" name="SnoxxProject" id="mlops-s2"
+                        value="M-S2 - Experiment Tracker & Quote Estimator">
+                    <div class="project-content">
+                        <div class="project-code">M-S2</div>
+                        <div class="project-name">ML Experiment Tracker & Automated Quote Estimator</div>
+                        <div class="project-desc">Logs experiments → pattern analysis → realistic cost/time estimates
+                            for new projects</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.0/10</span>
+                            <span class="meta-tag meta-revenue">💰 Margin Protection</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-title publish-title">🌍 Category P: Publishable Tools (Pick ONE)</div>
+
+                <div class="project-option" onclick="selectRadio('mlops-p1')">
+                    <input type="radio" name="PublishableProject" id="mlops-p1"
+                        value="M-P1 - Model Monitoring Dashboard" required>
+                    <div class="project-content">
+                        <div class="project-code">M-P1</div>
+                        <div class="project-name">Open-Source Model Monitoring & Drift Detection Dashboard</div>
+                        <div class="project-desc">Plug model via API → live accuracy tracking → drift detection → alerts
+                            → framework-agnostic</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 50K+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹24L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('mlops-p2')">
+                    <input type="radio" name="PublishableProject" id="mlops-p2" value="M-P2 - Dataset Profiler">
+                    <div class="project-content">
+                        <div class="project-code">M-P2</div>
+                        <div class="project-name">Dataset Profiler & Quality Report Generator</div>
+                        <div class="project-desc">Upload CSV/JSON/Parquet → visual report: distributions, nulls,
+                            outliers → HTML/PDF export</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 100K+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹18L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Engineering Projects -->
+            <div id="data-projects" class="projects-section">
+                <div class="category-title snoxx-title">🏢 Category S: Snoxx Company Tools (Pick ONE)</div>
+
+                <div class="project-option" onclick="selectRadio('data-s1')">
+                    <input type="radio" name="SnoxxProject" id="data-s1" value="D-S1 - BI Connector" required>
+                    <div class="project-content">
+                        <div class="project-code">D-S1</div>
+                        <div class="project-name">Universal Data-to-Power BI / Tableau Connector</div>
+                        <div class="project-desc">Tally/Sheets/MySQL/Excel/APIs → auto-clean → scheduled push to Power
+                            BI/Tableau</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.3/10</span>
+                            <span class="meta-tag meta-revenue">💰 Recurring Revenue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('data-s2')">
+                    <input type="radio" name="SnoxxProject" id="data-s2" value="D-S2 - Report Scheduler">
+                    <div class="project-content">
+                        <div class="project-code">D-S2</div>
+                        <div class="project-name">Automated Branded Report Scheduler & Delivery</div>
+                        <div class="project-desc">Data source + template → auto PDF/Excel → email delivery → change logs
+                        </div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.0/10</span>
+                            <span class="meta-tag meta-revenue">💰 Recurring Retainers</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('data-s3')">
+                    <input type="radio" name="SnoxxProject" id="data-s3" value="D-S3 - Data Quality Audit Toolkit">
+                    <div class="project-content">
+                        <div class="project-code">D-S3</div>
+                        <div class="project-name">Client Data Quality Audit & Migration Toolkit</div>
+                        <div class="project-desc">Ingest dumps → audit nulls/duplicates/outliers → visual mapper → clean
+                            export</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 8.8/10</span>
+                            <span class="meta-tag meta-revenue">💰 Billable Service</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-title publish-title">🌍 Category P: Publishable Tools (Pick ONE)</div>
+
+                <div class="project-option" onclick="selectRadio('data-p1')">
+                    <input type="radio" name="PublishableProject" id="data-p1" value="D-P1 - CSV/Excel Data Cleaner"
+                        required>
+                    <div class="project-content">
+                        <div class="project-code">D-P1</div>
+                        <div class="project-name">CSV / Excel Data Cleaner & Smart Transformer</div>
+                        <div class="project-desc">Upload messy spreadsheet → auto-fix → preview → download → save
+                            recipes for reuse</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 600K+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹36L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('data-p2')">
+                    <input type="radio" name="PublishableProject" id="data-p2" value="D-P2 - SQL Query Builder">
+                    <div class="project-content">
+                        <div class="project-code">D-P2</div>
+                        <div class="project-name">SQL Query Builder, Explainer & Optimiser</div>
+                        <div class="project-desc">English → SQL + explanation + optimizations → schema-aware → saved
+                            query library</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 400K+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹19L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('data-p3')">
+                    <input type="radio" name="PublishableProject" id="data-p3" value="D-P3 - Invoice Generator">
+                    <div class="project-content">
+                        <div class="project-code">D-P3</div>
+                        <div class="project-name">Invoice, Quotation & Receipt Generator</div>
+                        <div class="project-desc">Details → branded PDF → history → payment tracking → auto-reminders →
+                            Excel export</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 1M+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹36L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backend Projects -->
+            <div id="backend-projects" class="projects-section">
+                <div class="category-title snoxx-title">🏢 Category S: Snoxx Company Tools (Pick ONE)</div>
+
+                <div class="project-option" onclick="selectRadio('backend-s1')">
+                    <input type="radio" name="SnoxxProject" id="backend-s1" value="B-S1 - Website Builder Engine"
+                        required>
+                    <div class="project-content">
+                        <div class="project-code">B-S1</div>
+                        <div class="project-name">Internal Website Builder Engine for Client Types</div>
+                        <div class="project-desc">Config form → auto-generates Next.js site → Vercel deploy → client CMS
+                            → template library</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.2/10</span>
+                            <span class="meta-tag meta-revenue">💰 Delivery Speed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('backend-s2')">
+                    <input type="radio" name="SnoxxProject" id="backend-s2" value="B-S2 - Client Project Portal">
+                    <div class="project-content">
+                        <div class="project-code">B-S2</div>
+                        <div class="project-name">Client Project Portal with Delivery Tracking</div>
+                        <div class="project-desc">Client login → milestones → files → Razorpay payments → feedback →
+                            admin view</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-impact">⚡ Impact: 9.0/10</span>
+                            <span class="meta-tag meta-revenue">💰 Client Retention</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-title publish-title">🌍 Category P: Publishable Tools (Pick ONE)</div>
+
+                <div class="project-option" onclick="selectRadio('backend-p1')">
+                    <input type="radio" name="PublishableProject" id="backend-p1" value="B-P1 - Form Builder with Logic"
+                        required>
+                    <div class="project-content">
+                        <div class="project-code">B-P1</div>
+                        <div class="project-name">Form Builder with Response Dashboard & Logic Branching</div>
+                        <div class="project-desc">Drag-drop → conditional logic → shareable link → response dashboard →
+                            charts → CSV export</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 1.2M+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹48L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-option" onclick="selectRadio('backend-p2')">
+                    <input type="radio" name="PublishableProject" id="backend-p2" value="B-P2 - Website Uptime Monitor">
+                    <div class="project-content">
+                        <div class="project-code">B-P2</div>
+                        <div class="project-name">Website Uptime, Speed & SSL Monitor with Alerts</div>
+                        <div class="project-desc">Add URLs → 5-min checks → speed tracking → SSL expiry → instant alerts
+                            → status page</div>
+                        <div class="project-meta">
+                            <span class="meta-tag meta-search">🔍 200K+/mo searches</span>
+                            <span class="meta-tag meta-revenue">💰 ₹18L Y1 potential</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                <strong>ℹ️ Note:</strong> You must select exactly ONE project from Category S (Snoxx) and ONE from
+                Category P (Publishable). Once submitted, your selection will be recorded.
+            </div>
+
+            <div class="loading" id="loading">
+                ⏳ Submitting your selection... Please wait.
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">✅ Submit My Project Selection</button>
+        </form>
+    </div>
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-card">
+            <h2>🎉 Your project is submitted!</h2>
+            <p>Your department and project selection have been recorded successfully.</p>
+            <button class="btn" onclick="resetForm()">🔄 Submit Another Response</button>
+        </div>
+    </div>
+
+    <script>
+        // ========================================================
+        // CONFIGURATION - SET API URL HERE IF HOSTED SEPARATELY
+        // ========================================================
+        const API_BASE_URL = "https://snoxx-intern-project-portal.onrender.com"; 
+        const FORM_ACTION_URL = `${API_BASE_URL}/api/submit`;
+        // ========================================================
+
+        function showProjects() {
+            const dept = document.getElementById('department').value;
+            document.querySelectorAll('.projects-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.checked = false;
+            });
+            document.querySelectorAll('.project-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            if (dept) {
+                // Map option values to HTML section IDs to resolve mismatches
+                let sectionId = '';
+                if (dept === 'AI/ML') {
+                    sectionId = 'aiml-projects';
+                } else if (dept === 'Data Engineering') {
+                    sectionId = 'data-projects';
+                } else {
+                    sectionId = dept.toLowerCase().replace(/\s+/g, '') + '-projects';
+                }
+
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.classList.add('active');
+                    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                }
+            }
+        }
+
+        function selectRadio(id) {
+            const radio = document.getElementById(id);
+            if (!radio) return;
+            radio.checked = true;
+            const option = radio.closest('.project-option');
+            const groupName = radio.name;
+            document.querySelectorAll(`input[name="${groupName}"]`).forEach(r => {
+                r.closest('.project-option').classList.remove('selected');
+            });
+            option.classList.add('selected');
+        }
+
+        document.querySelectorAll('.project-option').forEach(option => {
+            option.addEventListener('click', function (e) {
+                if (e.target.type === 'radio') return;
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) selectRadio(radio.id);
+            });
+        });
+
+        document.getElementById('internForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const university = document.getElementById('university').value.trim();
+            const branch = document.getElementById('branch').value.trim();
+            const department = document.getElementById('department').value;
+
+            if (!name || !email || !university || !branch || !department) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            const snoxxRadio = document.querySelector('input[name="SnoxxProject"]:checked');
+            const publishableRadio = document.querySelector('input[name="PublishableProject"]:checked');
+
+            if (!snoxxRadio) {
+                alert('Please select ONE project from Category S (Snoxx Tools).');
+                return;
+            }
+
+            if (!publishableRadio) {
+                alert('Please select ONE project from Category P (Publishable Tools).');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('submitBtn').disabled = true;
+
+            try {
+                const formData = new FormData(this);
+
+                const response = await fetch(FORM_ACTION_URL, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const result = await response.json().catch(() => ({}));
+
+                if (response.ok && result.success) {
+                    document.getElementById('successOverlay').classList.add('active');
+                } else {
+                    throw new Error(result.message || 'Submission failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`❌ Submission failed: ${error.message || 'Please check your connection and try again.'}`);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        function resetForm() {
+            document.getElementById('successOverlay').classList.remove('active');
+            document.getElementById('internForm').reset();
+            document.querySelectorAll('.projects-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.project-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+
+</html>
