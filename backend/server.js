@@ -42,6 +42,46 @@ function escapeCsv(value) {
   return stringValue;
 }
 
+// Helper to normalize entry object keys (handling spacing/casing mismatches from Google Sheets)
+function normalizeSubmissions(data) {
+  return (data || []).map(entry => {
+    const normalized = {};
+    for (const key in entry) {
+      const cleanKey = key.replace(/\s+/g, '').toLowerCase();
+      if (cleanKey === 'timestamp') {
+        normalized.Timestamp = entry[key];
+      } else if (cleanKey === 'publishableproject' || cleanKey === 'publishable_project') {
+        normalized.PublishableProject = entry[key];
+      } else if (cleanKey === 'snoxxproject' || cleanKey === 'snoxx_project') {
+        normalized.SnoxxProject = entry[key];
+      } else if (cleanKey === 'name') {
+        normalized.Name = entry[key];
+      } else if (cleanKey === 'email') {
+        normalized.Email = entry[key];
+      } else if (cleanKey === 'university') {
+        normalized.University = entry[key];
+      } else if (cleanKey === 'branch') {
+        normalized.Branch = entry[key];
+      } else if (cleanKey === 'department') {
+        normalized.Department = entry[key];
+      } else {
+        normalized[key] = entry[key];
+      }
+    }
+    // Ensure standard keys are always present even if undefined
+    if (normalized.Timestamp === undefined) normalized.Timestamp = '';
+    if (normalized.Name === undefined) normalized.Name = '';
+    if (normalized.Email === undefined) normalized.Email = '';
+    if (normalized.University === undefined) normalized.University = '';
+    if (normalized.Branch === undefined) normalized.Branch = '';
+    if (normalized.Department === undefined) normalized.Department = '';
+    if (normalized.SnoxxProject === undefined) normalized.SnoxxProject = '';
+    if (normalized.PublishableProject === undefined) normalized.PublishableProject = '';
+    
+    return normalized;
+  });
+}
+
 // Root welcome response
 app.get('/', (req, res) => {
   res.json({ 
@@ -67,6 +107,48 @@ app.post('/api/submit', upload.none(), async (req, res) => {
       return res.status(400).json({ 
         success: false, 
         message: 'All fields are required. Please check that you completed all steps.' 
+      });
+    }
+
+    // 0. Check for duplicate project selection
+    let existingSubmissions = [];
+    try {
+      const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+      if (scriptUrl && scriptUrl.trim() !== '') {
+        const sheetsResponse = await fetch(scriptUrl.trim()).catch(() => null);
+        if (sheetsResponse && sheetsResponse.ok) {
+          const sheetsResult = await sheetsResponse.json().catch(() => ({}));
+          if (sheetsResult.success) {
+            existingSubmissions = normalizeSubmissions(sheetsResult.data || []);
+          }
+        }
+      }
+      if (existingSubmissions.length === 0) {
+        const fileData = fs.readFileSync(JSON_FILE, 'utf8');
+        existingSubmissions = normalizeSubmissions(JSON.parse(fileData || '[]'));
+      }
+    } catch (err) {
+      console.error('Error fetching submissions for uniqueness check:', err);
+    }
+
+    const normalizeText = str => str ? str.replace(/\s+/g, '').toLowerCase() : '';
+    const targetSnoxx = normalizeText(SnoxxProject);
+    const targetPub = normalizeText(PublishableProject);
+
+    const isSnoxxAlreadyTaken = existingSubmissions.some(sub => normalizeText(sub.SnoxxProject) === targetSnoxx);
+    const isPubAlreadyTaken = existingSubmissions.some(sub => normalizeText(sub.PublishableProject) === targetPub);
+
+    if (isSnoxxAlreadyTaken) {
+      return res.status(400).json({
+        success: false,
+        message: `The project "${SnoxxProject}" has already been selected by another student. Please choose a different project.`
+      });
+    }
+
+    if (isPubAlreadyTaken) {
+      return res.status(400).json({
+        success: false,
+        message: `The project "${PublishableProject}" has already been selected by another student. Please choose a different project.`
       });
     }
 
@@ -151,7 +233,7 @@ app.get('/api/submissions', async (req, res) => {
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
-            const submissions = result.data || [];
+            const submissions = normalizeSubmissions(result.data || []);
             
             // Sync to local files (cache)
             fs.writeFileSync(JSON_FILE, JSON.stringify(submissions, null, 2));
@@ -178,7 +260,7 @@ app.get('/api/submissions', async (req, res) => {
 
     // Fallback to local files if Google Sheets sync is disabled or fails
     const fileData = fs.readFileSync(JSON_FILE, 'utf8');
-    const submissions = JSON.parse(fileData || '[]');
+    const submissions = normalizeSubmissions(JSON.parse(fileData || '[]'));
     return res.json({ success: true, data: submissions });
   } catch (error) {
     console.error('Error fetching submissions:', error);

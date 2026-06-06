@@ -55,11 +55,24 @@ function doGet(e) {
       var record = {};
       for (var j = 0; j < headers.length; j++) {
         var val = row[j];
+        var header = headers[j].toString().trim();
+        var key = header;
+        
+        // Normalize common spelling/spacing variations
+        var cleanHeader = header.replace(/\s+/g, "").toLowerCase();
+        if (cleanHeader === "timestamp") {
+          key = "Timestamp";
+        } else if (cleanHeader === "publishableproject" || cleanHeader === "publishable_project") {
+          key = "PublishableProject";
+        } else if (cleanHeader === "snoxxproject" || cleanHeader === "snoxx_project") {
+          key = "SnoxxProject";
+        }
+        
         // Format Date to India timezone string
-        if (headers[j] === "Timestamp" && val instanceof Date) {
-          record[headers[j]] = Utilities.formatDate(val, "GMT+5:30", "M/d/yyyy, h:mm:ss a");
+        if (key === "Timestamp" && val instanceof Date) {
+          record[key] = Utilities.formatDate(val, "GMT+5:30", "M/d/yyyy, h:mm:ss a");
         } else {
-          record[headers[j]] = val;
+          record[key] = val;
         }
       }
       data.push(record);

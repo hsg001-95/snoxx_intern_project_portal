@@ -851,6 +851,60 @@
             });
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        // Load existing submissions and disable already taken projects
+        async function loadTakenProjects() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/submissions`);
+                const result = await response.json();
+                if (result.success) {
+                    const submissions = result.data || [];
+                    const taken = new Set();
+                    
+                    const normalizeText = str => str ? str.replace(/\s+/g, '').toLowerCase() : '';
+                    
+                    submissions.forEach(sub => {
+                        if (sub.SnoxxProject) taken.add(normalizeText(sub.SnoxxProject));
+                        if (sub.PublishableProject) taken.add(normalizeText(sub.PublishableProject));
+                    });
+                    
+                    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                        if (taken.has(normalizeText(radio.value))) {
+                            radio.disabled = true;
+                            const optionCard = radio.closest('.project-option');
+                            if (optionCard) {
+                                optionCard.style.opacity = '0.5';
+                                optionCard.style.cursor = 'not-allowed';
+                                optionCard.style.pointerEvents = 'none';
+                                
+                                const contentDiv = optionCard.querySelector('.project-content');
+                                if (contentDiv) {
+                                    const badge = document.createElement('span');
+                                    badge.style.background = '#fee2e2';
+                                    badge.style.color = '#991b1b';
+                                    badge.style.fontSize = '0.75rem';
+                                    badge.style.fontWeight = '700';
+                                    badge.style.padding = '3px 8px';
+                                    badge.style.borderRadius = '12px';
+                                    badge.style.marginLeft = '10px';
+                                    badge.style.display = 'inline-block';
+                                    badge.innerText = '🔒 Already Selected';
+                                    
+                                    const codeEl = contentDiv.querySelector('.project-code');
+                                    if (codeEl) {
+                                        codeEl.appendChild(badge);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Error fetching taken projects:', err);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadTakenProjects);
     </script>
 </body>
 
