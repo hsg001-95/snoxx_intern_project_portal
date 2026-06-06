@@ -332,7 +332,7 @@ app.get('/api/sheets-status', (req, res) => {
   return res.json({
     success: true,
     connected: !!(scriptUrl && scriptUrl.trim() !== ''),
-    url: scriptUrl && scriptUrl.trim() !== '' ? scriptUrl.trim().substring(0, 35) + '...' : null
+    url: scriptUrl ? scriptUrl.trim() : null
   });
 });
 
