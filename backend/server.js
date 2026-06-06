@@ -32,6 +32,16 @@ if (!fs.existsSync(CSV_FILE)) {
   fs.writeFileSync(CSV_FILE, 'Timestamp,Name,Email,University,Branch,Department,SnoxxProject,PublishableProject\n');
 }
 
+// Helper to get Google Apps Script URL with fallback for environment variables
+function getGoogleScriptUrl() {
+  const envUrl = process.env.GOOGLE_SCRIPT_URL;
+  const fallbackUrl = 'https://script.google.com/macros/s/AKfycbwDskrTX4meBEl5kKWoIzEdJSzkKfUoucY2wzpR0_phm37FWAoIk-YerJCO1L6oseCi/exec';
+  if (!envUrl || envUrl.trim() === '' || envUrl.includes('AKfycbzI58ZVW_65n2sv2DB__FiH0KMC16hcbQf543b7eVkBbm3OXqbR_X8V8kedoECT5U_F')) {
+    return fallbackUrl;
+  }
+  return envUrl.trim();
+}
+
 // Helper to escape values for CSV
 function escapeCsv(value) {
   if (value === null || value === undefined) return '';
@@ -113,7 +123,7 @@ app.post('/api/submit', upload.none(), async (req, res) => {
     // 0. Check for duplicate project selection
     let existingSubmissions = [];
     try {
-      const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+      const scriptUrl = getGoogleScriptUrl();
       if (scriptUrl && scriptUrl.trim() !== '') {
         const sheetsResponse = await fetch(scriptUrl.trim()).catch(() => null);
         if (sheetsResponse && sheetsResponse.ok) {
@@ -184,7 +194,7 @@ app.post('/api/submit', upload.none(), async (req, res) => {
     console.log(`[Success] Recorded submission from ${newEntry.Name} (${newEntry.Email})`);
 
     // 3. Forward to Google Sheets in the background (non-blocking)
-    const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+    const scriptUrl = getGoogleScriptUrl();
     if (scriptUrl && scriptUrl.trim() !== '') {
       console.log(`[Info] Forwarding submission for ${newEntry.Name} to Google Sheets...`);
       fetch(scriptUrl.trim(), {
@@ -225,7 +235,7 @@ app.post('/api/submit', upload.none(), async (req, res) => {
 // Route to get all submissions
 app.get('/api/submissions', async (req, res) => {
   try {
-    const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+    const scriptUrl = getGoogleScriptUrl();
     if (scriptUrl && scriptUrl.trim() !== '') {
       console.log('[Info] Fetching latest submissions from Google Sheets...');
       try {
@@ -293,7 +303,7 @@ app.post('/api/submissions/clear', async (req, res) => {
     console.log('[Info] Cleared local cache.');
 
     // 2. Clear Google Sheets if connected
-    const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+    const scriptUrl = getGoogleScriptUrl();
     if (scriptUrl && scriptUrl.trim() !== '') {
       console.log('[Info] Sending clear command to Google Sheets...');
       try {
@@ -328,7 +338,7 @@ app.post('/api/submissions/clear', async (req, res) => {
 
 // Google Sheets connection status route
 app.get('/api/sheets-status', (req, res) => {
-  const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+  const scriptUrl = getGoogleScriptUrl();
   return res.json({
     success: true,
     connected: !!(scriptUrl && scriptUrl.trim() !== ''),
