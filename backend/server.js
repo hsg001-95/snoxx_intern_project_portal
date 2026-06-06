@@ -118,8 +118,8 @@ app.post('/api/submit', upload.none(), async (req, res) => {
         const sheetsResponse = await fetch(scriptUrl.trim()).catch(() => null);
         if (sheetsResponse && sheetsResponse.ok) {
           const sheetsResult = await sheetsResponse.json().catch(() => ({}));
-          if (sheetsResult.success) {
-            existingSubmissions = normalizeSubmissions(sheetsResult.data || []);
+          if (sheetsResult.success && Array.isArray(sheetsResult.data)) {
+            existingSubmissions = normalizeSubmissions(sheetsResult.data);
           }
         }
       }
@@ -232,8 +232,8 @@ app.get('/api/submissions', async (req, res) => {
         const response = await fetch(scriptUrl.trim());
         if (response.ok) {
           const result = await response.json();
-          if (result.success) {
-            const submissions = normalizeSubmissions(result.data || []);
+          if (result.success && Array.isArray(result.data)) {
+            const submissions = normalizeSubmissions(result.data);
             
             // Sync to local files (cache)
             fs.writeFileSync(JSON_FILE, JSON.stringify(submissions, null, 2));
@@ -248,7 +248,7 @@ app.get('/api/submissions', async (req, res) => {
             console.log(`[Success] Synced ${submissions.length} submissions from Google Sheets.`);
             return res.json({ success: true, data: submissions });
           } else {
-            console.warn('[Warning] Google Sheets script returned error:', result.error);
+            console.warn('[Warning] Google Sheets script returned success but no data array. Check web app script deployment.');
           }
         } else {
           console.warn(`[Warning] Google Sheets responded with status ${response.status}`);
